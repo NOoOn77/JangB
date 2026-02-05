@@ -15,12 +15,12 @@ const users = [
   {
     username: "user1",
     password: "pass1",
-    info: "user1에 대한 관리자 메모입니다."
+    info: "장비 비밀번호는 123456입니다."
   },
   {
     username: "user2",
     password: "pass2",
-    info: "user2에 대한 중요 정보입니다."
+    info: "장비 비밀번호는 123456입니다."
   }
 ];
 
