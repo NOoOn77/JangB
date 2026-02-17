@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>장비 대여 신청</title>
+    <link rel="stylesheet" href="./style.css?v=20260217" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="top">
+        <div class="brand">
+          <div class="brand__mark" aria-hidden="true">
+            <!-- 간단한 쌍안경/망원경 느낌의 아이콘(SVG) -->
+            <svg viewBox="0 0 64 64" fill="none">
+              <path
+                d="M18 18c0-3 2.5-5.5 5.5-5.5h3C29.5 12.5 32 15 32 18v10h-6V18Z"
+                fill="currentColor"
+                opacity="0.9"
+              />
+              <path
+                d="M32 18c0-3 2.5-5.5 5.5-5.5h3C43.5 12.5 46 15 46 18v10h-6V18Z"
+                fill="currentColor"
+                opacity="0.9"
+              />
+              <path
+                d="M10 28h44c1.7 0 3 1.3 3 3v7c0 1.7-1.3 3-3 3H10c-1.7 0-3-1.3-3-3v-7c0-1.7 1.3-3 3-3Z"
+                fill="currentColor"
+                opacity="0.9"
+              />
+              <path
+                d="M16 41c-4.4 0-8 3.6-8 8v1c0 2.2 1.8 4 4 4h8c2.2 0 4-1.8 4-4v-1c0-4.4-3.6-8-8-8Z"
+                stroke="currentColor"
+                stroke-width="4"
+              />
+              <path
+                d="M48 41c-4.4 0-8 3.6-8 8v1c0 2.2 1.8 4 4 4h8c2.2 0 4-1.8 4-4v-1c0-4.4-3.6-8-8-8Z"
+                stroke="currentColor"
+                stroke-width="4"
+              />
+            </svg>
+          </div>
+          <div class="brand__text">
+            <p class="brand__title">장비 대여 신청</p>
+            <p class="brand__sub">
+              대여할 장비 정보를 입력해주세요.
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <section class="card" id="rental-form-section" aria-label="장비 대여 신청">
+        <form id="rental-form">
+          <div class="form-group">
+            <label for="name">이름</label>
+            <input 
+              type="text" 
+              id="name" 
+              name="name" 
+              placeholder="이름을 입력하세요" 
+              required 
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="rental-date">대여 일자</label>
+            <div class="date-input-group">
+              <select id="rental-year" name="rental-year" required>
+                <option value="">년</option>
+              </select>
+              <select id="rental-month" name="rental-month" required>
+                <option value="">월</option>
+              </select>
+              <select id="rental-day" name="rental-day" required>
+                <option value="">일</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="return-date">반납 일자</label>
+            <div class="date-input-group">
+              <select id="return-year" name="return-year" required>
+                <option value="">년</option>
+              </select>
+              <select id="return-month" name="return-month" required>
+                <option value="">월</option>
+              </select>
+              <select id="return-day" name="return-day" required>
+                <option value="">일</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="equipment-type">대여 기종</label>
+            <select id="equipment-type" name="equipment-type" required>
+              <option value="">기종을 선택하세요</option>
+              <option value="scope">스코프</option>
+              <option value="tripod">삼각대</option>
+              <option value="binoculars">쌍안경</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="equipment-item-group" style="display: none;">
+            <label for="equipment-item">장비 선택</label>
+            <select id="equipment-item" name="equipment-item" required>
+              <option value="">장비를 선택하세요</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn btn--primary">장비 대여</button>
+          <p id="message" class="message" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+    </main>
+
+    <script src="./script.js?v=20260217"></script>
+  </body>
+</html>
