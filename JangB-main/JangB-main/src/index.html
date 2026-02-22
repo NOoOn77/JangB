@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>장비 대여 신청</title>
+    <link rel="stylesheet" href="./style.css?v=20260217" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="top">
+        <div class="brand">
+          <div class="brand__mark" aria-hidden="true">
+            <!-- 간단한 쌍안경/망원경 느낌의 아이콘(SVG) -->
+            <svg viewBox="0 0 64 64" fill="none">
+              <path
+                d="M18 18c0-3 2.5-5.5 5.5-5.5h3C29.5 12.5 32 15 32 18v10h-6V18Z"
+                fill="currentColor"
+                opacity="0.9"
+              />
+              <path
+                d="M32 18c0-3 2.5-5.5 5.5-5.5h3C43.5 12.5 46 15 46 18v10h-6V18Z"
+                fill="currentColor"
+                opacity="0.9"
+              />
+              <path
+                d="M10 28h44c1.7 0 3 1.3 3 3v7c0 1.7-1.3 3-3 3H10c-1.7 0-3-1.3-3-3v-7c0-1.7 1.3-3 3-3Z"
+                fill="currentColor"
+                opacity="0.9"
+              />
+              <path
+                d="M16 41c-4.4 0-8 3.6-8 8v1c0 2.2 1.8 4 4 4h8c2.2 0 4-1.8 4-4v-1c0-4.4-3.6-8-8-8Z"
+                stroke="currentColor"
+                stroke-width="4"
+              />
+              <path
+                d="M48 41c-4.4 0-8 3.6-8 8v1c0 2.2 1.8 4 4 4h8c2.2 0 4-1.8 4-4v-1c0-4.4-3.6-8-8-8Z"
+                stroke="currentColor"
+                stroke-width="4"
+              />
+            </svg>
+          </div>
+          <div class="brand__text">
+            <p class="brand__title">장비 대여 신청</p>
+            <p class="brand__sub">
+              현재 대여 현황을 확인하고, 장비를 신청할 수 있습니다.
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <!-- 장비 대여 현황 -->
+      <section class="card" id="rental-status-section" aria-label="장비 대여 현황" style="margin-bottom: 14px;">
+        <div class="main-head">
+          <div>
+            <div class="pill">
+              <span class="pill__dot" aria-hidden="true"></span>
+              <span class="pill__text">실시간 대여 현황</span>
+            </div>
+          </div>
+          <button type="button" class="btn btn--ghost" id="return-toggle-btn">
+            장비 반납
+          </button>
+        </div>
+        <div id="rental-status-content" class="rental-status" aria-live="polite">
+          <!-- JS에서 대여 현황을 렌더링합니다. -->
+          <p class="rental-status__empty">대여 현황을 불러오는 중입니다...</p>
+        </div>
+
+        <!-- 장비 반납 패널 -->
+        <section id="return-panel" class="return-panel hidden" aria-label="장비 반납">
+          <div class="form-group">
+            <label for="return-name">반납자 이름</label>
+            <input
+              type="text"
+              id="return-name"
+              name="return-name"
+              placeholder="실명으로 입력해주십시오"
+            />
+          </div>
+          <div class="form-group">
+            <label for="return-student-id">학번</label>
+            <input
+              type="text"
+              id="return-student-id"
+              name="return-student-id"
+              placeholder="예: 2023-00000"
+              autocomplete="off"
+            />
+          </div>
+          <button type="button" class="btn btn--ghost" id="return-lookup-btn">
+            내 대여 내역 불러오기
+          </button>
+          <p id="return-message" class="message" aria-live="polite"></p>
+
+          <div id="return-results" class="return-results"></div>
+
+          <div id="return-confirm-section" class="return-confirm-section hidden">
+            <p class="return-warning">
+              정말로 반납하시겠습니까? 타인과 합의없이 타인이 빌린 장비를 독단적으로 반납하는 행위는 엄격히 금지됩니다.
+            </p>
+            <p class="return-confirm-notice">
+              위에서 입력한 <strong>이름</strong>과 <strong>학번</strong>이 등록된 정보와 일치할 때만 반납이 처리됩니다.
+            </p>
+            <button type="button" class="btn btn--primary" id="return-submit-btn">
+              선택한 장비 반납 처리
+            </button>
+          </div>
+        </section>
+      </section>
+
+      <section class="card" id="rental-form-section" aria-label="장비 대여 신청">
+        <form id="rental-form">
+          <div class="form-group">
+            <label for="name">이름</label>
+            <input 
+              type="text" 
+              id="name" 
+              name="name" 
+              placeholder="실명으로 입력해주십시오" 
+              required 
+            />
+          </div>
+          <div class="form-group">
+            <label for="student-id">학번</label>
+            <input
+              type="text"
+              id="student-id"
+              name="student-id"
+              placeholder="예: 2023-00000"
+              autocomplete="off"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="rental-date">대여 일자</label>
+            <div class="date-input-group">
+              <select id="rental-year" name="rental-year" required>
+                <option value="">년</option>
+              </select>
+              <select id="rental-month" name="rental-month" required>
+                <option value="">월</option>
+              </select>
+              <select id="rental-day" name="rental-day" required>
+                <option value="">일</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="return-date">반납 일자</label>
+            <div class="date-input-group">
+              <select id="return-year" name="return-year" required>
+                <option value="">년</option>
+              </select>
+              <select id="return-month" name="return-month" required>
+                <option value="">월</option>
+              </select>
+              <select id="return-day" name="return-day" required>
+                <option value="">일</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="equipment-type">대여 기종</label>
+            <select id="equipment-type" name="equipment-type" required>
+              <option value="">기종을 선택하세요</option>
+              <option value="scope">스코프</option>
+              <option value="tripod">삼각대</option>
+              <option value="binoculars">쌍안경</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="equipment-item-group" style="display: none;">
+            <label>장비 선택 (여러 개 선택 가능)</label>
+            <div id="equipment-item-checkboxes" class="equipment-checkboxes"></div>
+          </div>
+
+          <div class="form-group" id="rental-cart-group">
+            <label>선택한 장비 목록 (장바구니)</label>
+            <div id="rental-cart" class="rental-cart">
+              <p class="rental-cart__empty">선택된 장비가 없습니다. 기종을 선택한 뒤 장비를 체크해주세요.</p>
+            </div>
+          </div>
+
+          <p class="return-confirm-notice" style="margin-top: 0;">
+            위에서 입력한 <strong>이름</strong>과 <strong>학번</strong>이 등록된 정보와 일치할 때만 대여가 처리됩니다.
+          </p>
+          <button type="submit" class="btn btn--primary">장비 대여</button>
+          <p id="message" class="message" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+    </main>
+
+    <script src="./script.js?v=20260218"></script>
+  </body>
+</html>
