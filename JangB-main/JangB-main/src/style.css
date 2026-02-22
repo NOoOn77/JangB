@@ -124,6 +124,7 @@ label {
 
 input[type="text"],
 input[type="password"],
+input[type="checkbox"],
 select {
   width: 100%;
   padding: 10px 12px;
@@ -132,6 +133,16 @@ select {
   background: rgba(10, 18, 40, 0.55);
   color: rgba(234, 240, 255, 0.92);
   font-size: 14px;
+}
+
+input[type="checkbox"] {
+  width: auto;
+  padding: 0;
+  cursor: pointer;
+  accent-color: #70a8ff;
+  width: 18px;
+  height: 18px;
+  margin: 0;
 }
 
 input:focus,
@@ -245,6 +256,210 @@ button[type="submit"]:hover {
 .main-body {
   display: grid;
   gap: 14px;
+}
+
+/* 장비 대여 현황 UI */
+.rental-status {
+  font-size: 13px;
+  color: rgba(234, 240, 255, 0.88);
+}
+
+.rental-status__empty {
+  font-size: 13px;
+  color: rgba(234, 240, 255, 0.7);
+}
+
+.rental-status__list {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 6px;
+}
+
+.rental-status__list th,
+.rental-status__list td {
+  padding: 4px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+  text-align: left;
+}
+
+.rental-status__list th:nth-child(4),
+.rental-status__list td:nth-child(4) {
+  font-size: 11px;
+}
+
+.rental-status__list th {
+  font-weight: 700;
+  color: rgba(234, 240, 255, 0.78);
+}
+
+.rental-status__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 11px;
+}
+
+.rental-status__badge--ongoing {
+  background: rgba(112, 168, 255, 0.18);
+  border: 1px solid rgba(112, 168, 255, 0.4);
+  color: #70a8ff;
+}
+
+.rental-status__badge--future {
+  background: rgba(95, 230, 198, 0.16);
+  border: 1px solid rgba(95, 230, 198, 0.4);
+  color: #5fe6c6;
+}
+
+.rental-status__badge--past {
+  background: rgba(234, 240, 255, 0.05);
+  border: 1px solid rgba(234, 240, 255, 0.18);
+  color: rgba(234, 240, 255, 0.6);
+}
+
+/* 장비 반납 패널 */
+.return-panel {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.return-results {
+  margin-top: 10px;
+  font-size: 12px;
+  color: rgba(234, 240, 255, 0.86);
+}
+
+.return-results table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 4px;
+}
+
+.return-results th,
+.return-results td {
+  padding: 4px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+}
+
+.return-results th:first-child,
+.return-results td:first-child {
+  text-align: center;
+  width: 50px;
+}
+
+.return-item-checkbox {
+  cursor: pointer;
+}
+
+/* 대여 폼 체크박스 스타일 */
+.equipment-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.equipment-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(10, 18, 40, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.equipment-checkbox-item:hover {
+  background: rgba(10, 18, 40, 0.5);
+  border-color: rgba(112, 168, 255, 0.3);
+}
+
+.equipment-checkbox-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: #70a8ff;
+}
+
+.equipment-checkbox-item label {
+  margin: 0;
+  cursor: pointer;
+  font-size: 14px;
+  color: rgba(234, 240, 255, 0.9);
+  flex: 1;
+}
+
+/* 장바구니(선택한 장비 목록) */
+.rental-cart {
+  margin-top: 6px;
+  font-size: 12px;
+  color: rgba(234, 240, 255, 0.88);
+  background: rgba(10, 18, 40, 0.35);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 8px 10px;
+}
+
+.rental-cart__empty {
+  font-size: 12px;
+  color: rgba(234, 240, 255, 0.7);
+}
+
+.rental-cart__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.rental-cart__table th,
+.rental-cart__table td {
+  padding: 4px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+}
+
+.rental-cart__table th {
+  font-weight: 700;
+  color: rgba(234, 240, 255, 0.78);
+}
+
+.rental-cart__remove-btn {
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(234, 240, 255, 0.92);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.rental-cart__remove-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.return-warning {
+  margin-top: 12px;
+  margin-bottom: 8px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: rgba(234, 240, 255, 0.78);
+}
+
+.return-confirm-notice {
+  margin-top: 8px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(234, 240, 255, 0.9);
+}
+
+.return-confirm-section .form-group {
+  margin-top: 8px;
 }
 
 .meta {

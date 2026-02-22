@@ -43,11 +43,71 @@
           <div class="brand__text">
             <p class="brand__title">장비 대여 신청</p>
             <p class="brand__sub">
-              대여할 장비 정보를 입력해주세요.
+              현재 대여 현황을 확인하고, 장비를 신청할 수 있습니다.
             </p>
           </div>
         </div>
       </header>
+
+      <!-- 장비 대여 현황 -->
+      <section class="card" id="rental-status-section" aria-label="장비 대여 현황" style="margin-bottom: 14px;">
+        <div class="main-head">
+          <div>
+            <div class="pill">
+              <span class="pill__dot" aria-hidden="true"></span>
+              <span class="pill__text">실시간 대여 현황</span>
+            </div>
+          </div>
+          <button type="button" class="btn btn--ghost" id="return-toggle-btn">
+            장비 반납
+          </button>
+        </div>
+        <div id="rental-status-content" class="rental-status" aria-live="polite">
+          <!-- JS에서 대여 현황을 렌더링합니다. -->
+          <p class="rental-status__empty">대여 현황을 불러오는 중입니다...</p>
+        </div>
+
+        <!-- 장비 반납 패널 -->
+        <section id="return-panel" class="return-panel hidden" aria-label="장비 반납">
+          <div class="form-group">
+            <label for="return-name">반납자 이름</label>
+            <input
+              type="text"
+              id="return-name"
+              name="return-name"
+              placeholder="대여 시 입력한 이름을 입력하세요"
+            />
+          </div>
+          <div class="form-group">
+            <label for="return-student-id">학번</label>
+            <input
+              type="text"
+              id="return-student-id"
+              name="return-student-id"
+              placeholder="예: 2023-00000"
+              autocomplete="off"
+            />
+          </div>
+          <button type="button" class="btn btn--ghost" id="return-lookup-btn">
+            내 대여 내역 불러오기
+          </button>
+          <p id="return-message" class="message" aria-live="polite"></p>
+
+          <div id="return-results" class="return-results"></div>
+
+          <div id="return-confirm-section" class="return-confirm-section hidden">
+            <p class="return-warning">
+              정말로 반납하시겠습니까? 타인과 합의없이 타인이 빌린 장비를 독단적으로 반납하는 행위는 엄격히 금지됩니다.
+            </p>
+            <p class="return-confirm-notice">
+              위에서 입력한 <strong>이름</strong>과 <strong>학번</strong>이 등록된 정보와 일치할 때만 반납이 처리됩니다.
+            </p>
+            <button type="button" class="btn btn--primary" id="return-submit-btn">
+              선택한 장비 반납 처리
+            </button>
+          </div>
+        </section>
+      </section>
 
       <section class="card" id="rental-form-section" aria-label="장비 대여 신청">
         <form id="rental-form">
@@ -103,10 +163,15 @@
           </div>
 
           <div class="form-group" id="equipment-item-group" style="display: none;">
-            <label for="equipment-item">장비 선택</label>
-            <select id="equipment-item" name="equipment-item" required>
-              <option value="">장비를 선택하세요</option>
-            </select>
+            <label>장비 선택 (여러 개 선택 가능)</label>
+            <div id="equipment-item-checkboxes" class="equipment-checkboxes"></div>
+          </div>
+
+          <div class="form-group" id="rental-cart-group">
+            <label>선택한 장비 목록 (장바구니)</label>
+            <div id="rental-cart" class="rental-cart">
+              <p class="rental-cart__empty">선택된 장비가 없습니다. 기종을 선택한 뒤 장비를 체크해주세요.</p>
+            </div>
           </div>
 
           <button type="submit" class="btn btn--primary">장비 대여</button>
@@ -115,6 +180,6 @@
       </section>
     </main>
 
-    <script src="./script.js?v=20260217"></script>
+    <script src="./script.js?v=20260218"></script>
   </body>
 </html>

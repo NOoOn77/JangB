@@ -1,0 +1,30 @@
+# JangB 장비 대여 앱 - systemd 서비스
+# 설치 방법:
+#   1. 경로 수정: 아래 JANGB_HOME 을 실제 프로젝트 경로로 바꾼 뒤
+#   2. 복사: sudo cp scripts/jangb.service /etc/systemd/system/
+#   3. 리로드: sudo systemctl daemon-reload
+#   4. 활성화(부팅 시 자동 시작): sudo systemctl enable jangb
+#   5. 시작: sudo systemctl start jangb
+# 관리: sudo systemctl status jangb | stop jangb | restart jangb
+
+[Unit]
+Description=JangB Equipment Rental Node Server
+After=network.target
+
+[Service]
+Type=simple
+# VM 사용자 계정과 프로젝트 경로에 맞게 수정하세요 (예: pje070163, /home/pje070163/JangB-main)
+User=YOUR_USER
+WorkingDirectory=/home/YOUR_USER/JangB-main
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+RestartSec=3
+StandardOutput=append:/home/YOUR_USER/JangB-main/jangb-node.log
+StandardError=append:/home/YOUR_USER/JangB-main/jangb-node.log
+
+# 환경변수 (필요 시)
+# Environment=PORT=8080
+# Environment=GOOGLE_SCRIPT_URL=https://...
+
+[Install]
+WantedBy=multi-user.target
