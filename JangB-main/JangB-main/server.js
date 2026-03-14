@@ -1,13 +1,34 @@
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
+const compression = require("compression");
 
 const app = express();
 const PORT = process.env.PORT || 8080;
 
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static("src")); // 정적 파일 (index.html, script.js, style.css)
+app.use(compression());
+
+// 정적 파일 (index.html, script.js, style.css) – 캐싱 최적화
+app.use(
+  express.static("src", {
+    etag: true,
+    lastModified: true,
+    // 기본 maxAge는 7일로, 개별 파일에서 Cache-Control로 덮어씀
+    maxAge: "7d",
+    setHeaders: (res, path) => {
+      // HTML은 항상 최신 상태를 받도록 캐시 최소화
+      if (path.endsWith("index.html")) {
+        res.setHeader("Cache-Control", "no-cache");
+        return;
+      }
+
+      // JS/CSS 등 정적 자원은 강력 캐시 (버전 쿼리스트링으로 무효화)
+      res.setHeader("Cache-Control", "public, max-age=604800, immutable");
+    }
+  })
+);
 
 // 구글 스프레드시트 Web App URL (환경변수 또는 직접 설정)
 // 이 URL은 Google Apps Script에서 생성됩니다 (설정 가이드 참조)
@@ -24,6 +45,12 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+// /api/rentals 결과를 짧게 캐싱해, 같은 시점에 여러 사용자가 접속할 때
+// 구글 스프레드시트 호출을 줄이고 응답 지연을 최소화
+let rentalsCache = null;
+let rentalsCacheTimestamp = 0;
+const RENTALS_CACHE_TTL_MS = 5_000; // 5초
+
 // 현재 대여 현황 조회 API (구글 스프레드시트 → 읽기)
 app.get("/api/rentals", async (req, res) => {
   if (!GOOGLE_SCRIPT_URL) {
@@ -35,6 +62,13 @@ app.get("/api/rentals", async (req, res) => {
   }
 
   try {
+    const now = Date.now();
+
+    // 짧은 TTL(5초) 내에서는 캐시 응답 사용
+    if (rentalsCache && now - rentalsCacheTimestamp < RENTALS_CACHE_TTL_MS) {
+      return res.json(rentalsCache);
+    }
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 12_000);
 
@@ -79,10 +113,15 @@ app.get("/api/rentals", async (req, res) => {
 
     const rows = Array.isArray(result.rows) ? result.rows : result.data;
 
-    return res.json({
+    const payload = {
       ok: true,
       rows
-    });
+    };
+
+    rentalsCache = payload;
+    rentalsCacheTimestamp = Date.now();
+
+    return res.json(payload);
   } catch (error) {
     console.error("구글 스프레드시트 대여 목록 조회 오류:", error);
     return res.status(500).json({
@@ -97,7 +136,7 @@ app.get("/api/rentals", async (req, res) => {
 
 // 장비 대여 신청 API (여러 기종/여러 장비 지원)
 app.post("/api/rental", async (req, res) => {
-  const { name, studentId, rentalDate, returnDate, equipmentType, equipmentItem, equipmentItems } = req.body;
+  const { name, rentalDate, returnDate, equipmentType, equipmentItem, equipmentItems } = req.body;
 
   // equipmentItems 배열(신규 형식: { equipmentType, equipmentItem }[]) 또는
   // 단일 equipmentItem 문자열(기존 형식)을 모두 지원
@@ -114,17 +153,6 @@ app.post("/api/rental", async (req, res) => {
       ok: false,
       message: "모든 항목을 입력하고 최소 하나 이상의 장비를 선택해주세요."
     });
-  }
-
-  // 구글 스프레드시트 연동 시 이름·학번 검증을 위해 학번 필수
-  if (GOOGLE_SCRIPT_URL) {
-    const sid = typeof studentId === "string" ? studentId.trim() : "";
-    if (!sid) {
-      return res.status(400).json({
-        ok: false,
-        message: "학번을 입력해주세요. 등록된 이름과 학번이 일치할 때만 대여할 수 있습니다."
-      });
-    }
   }
 
   // 구글 스프레드시트 URL이 설정되지 않은 경우
@@ -145,105 +173,111 @@ app.post("/api/rental", async (req, res) => {
     });
   }
 
-  // 각 장비에 대해 순차적으로 처리
+  // 각 장비에 대해 병렬로 처리하여 전체 대기 시간을 단축
   const results = [];
   const errors = [];
 
-  for (const item of itemsToRent) {
-    // item이 문자열인 경우(기존 형식)와 객체인 경우(신규 형식) 모두 처리
-    const itemName = typeof item === "string" ? item : item.equipmentItem;
-    const itemType =
-      typeof item === "string"
-        ? equipmentType // 기존 형식에서는 공통 equipmentType 사용
-        : item.equipmentType;
+  await Promise.all(
+    itemsToRent.map(async (item) => {
+      // item이 문자열인 경우(기존 형식)와 객체인 경우(신규 형식) 모두 처리
+      const itemName = typeof item === "string" ? item : item.equipmentItem;
+      const itemType =
+        typeof item === "string"
+          ? equipmentType // 기존 형식에서는 공통 equipmentType 사용
+          : item.equipmentType;
 
-    if (!itemName || !itemType) {
-      errors.push({
-        equipmentItem: itemName || item,
-        error: "장비 정보가 올바르지 않습니다."
-      });
-      continue;
-    }
-
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 12_000);
-
-      const response = await fetch(GOOGLE_SCRIPT_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        signal: controller.signal,
-        body: JSON.stringify({
-          name,
-          studentId: (typeof studentId === "string" ? studentId.trim() : "") || undefined,
-          rentalDate,
-          returnDate,
-          equipmentType: itemType,
-          equipmentItem: itemName,
-          timestamp: new Date().toISOString()
-        })
-      });
-
-      clearTimeout(timeoutId);
-
-      const contentType = response.headers.get("content-type") || "";
-      const bodyText = await response.text();
-      const bodyPreview = bodyText.slice(0, 700);
-
-      console.log(
-        `[GoogleScript][${itemType}/${itemName}] status:`,
-        response.status,
-        response.statusText
-      );
-      console.log("[GoogleScript] content-type:", contentType);
-      console.log("[GoogleScript] body preview:", bodyPreview);
-
-      if (!response.ok) {
+      if (!itemName || !itemType) {
         errors.push({
-          equipmentItem: itemName,
-          error: `구글 스프레드시트(Web App) 응답 오류: ${response.status} ${response.statusText}`
+          equipmentItem: itemName || item,
+          error: "장비 정보가 올바르지 않습니다."
         });
-        continue;
+        return;
       }
 
-      let result = null;
       try {
-        result = JSON.parse(bodyText);
-      } catch {
-        result = null;
-      }
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12_000);
 
-      if (!result) {
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          signal: controller.signal,
+          body: JSON.stringify({
+            name,
+            rentalDate,
+            returnDate,
+            equipmentType: itemType,
+            equipmentItem: itemName,
+            timestamp: new Date().toISOString()
+          })
+        });
+
+        clearTimeout(timeoutId);
+
+        const contentType = response.headers.get("content-type") || "";
+        const bodyText = await response.text();
+        const bodyPreview = bodyText.slice(0, 700);
+
+        console.log(
+          `[GoogleScript][${itemType}/${itemName}] status:`,
+          response.status,
+          response.statusText
+        );
+        console.log("[GoogleScript] content-type:", contentType);
+        console.log("[GoogleScript] body preview:", bodyPreview);
+
+        if (!response.ok) {
+          errors.push({
+            equipmentItem: itemName,
+            error: `구글 스프레드시트(Web App) 응답 오류: ${response.status} ${response.statusText}`
+          });
+          return;
+        }
+
+        let result = null;
+        try {
+          result = JSON.parse(bodyText);
+        } catch {
+          result = null;
+        }
+
+        if (!result) {
+          errors.push({
+            equipmentItem: itemName,
+            error:
+              "구글 스프레드시트(Web App) 응답이 JSON이 아닙니다. Apps Script 설정을 확인하세요."
+          });
+          return;
+        }
+
+        // Apps Script에서 success: false로 내려온 경우
+        if (result && result.success === false) {
+          errors.push({
+            equipmentItem: itemName,
+            error:
+              result.message ||
+              "대여 신청 처리 중 오류가 발생했습니다. (구글 스프레드시트 Web App 응답)"
+          });
+          return;
+        }
+
+        results.push({
+          equipmentItem: itemName,
+          equipmentType: itemType,
+          success: true,
+          data: result
+        });
+      } catch (error) {
+        console.error(`구글 스프레드시트 연동 오류 [${itemType}/${itemName}]:`, error);
         errors.push({
           equipmentItem: itemName,
-          error:
-            "구글 스프레드시트(Web App) 응답이 JSON이 아닙니다. Apps Script 설정을 확인하세요."
+          error: error?.message || String(error)
         });
-        continue;
       }
-
-      // Apps Script에서 success: false로 내려온 경우
-      if (result && result.success === false) {
-        errors.push({
-          equipmentItem: itemName,
-          error:
-            result.message ||
-            "대여 신청 처리 중 오류가 발생했습니다. (구글 스프레드시트 Web App 응답)"
-        });
-        continue;
-      }
-
-      results.push({ equipmentItem: itemName, equipmentType: itemType, success: true, data: result });
-    } catch (error) {
-      console.error(`구글 스프레드시트 연동 오류 [${itemType}/${itemName}]:`, error);
-      errors.push({
-        equipmentItem: itemName,
-        error: error?.message || String(error)
-      });
-    }
-  }
+    })
+  );
 
   // 일부 실패한 경우
   if (errors.length > 0 && results.length === 0) {
@@ -481,3 +515,4 @@ app.listen(PORT, () => {
     console.log("   환경변수 GOOGLE_SCRIPT_URL을 설정하거나 server.js를 수정하세요.");
   }
 });
+
