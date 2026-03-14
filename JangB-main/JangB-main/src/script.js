@@ -20,6 +20,7 @@ let currentRentals = [];
 let currentReturnName = "";
 let selectedReturnItems = []; // 선택된 반납 항목들
 let selectedRentalItems = []; // 장바구니에 담긴 대여 장비들 (여러 기종 지원)
+let isReturnSubmitLocked = false; // 반납 버튼 연속 클릭 방지(15초 쿨다운)
 
 // 장비 옵션 정의
 const equipmentOptions = {
@@ -252,7 +253,6 @@ form.addEventListener("submit", async (e) => {
 
   // 폼 데이터 수집
   const name = document.getElementById("name").value.trim();
-  const studentId = (document.getElementById("student-id") && document.getElementById("student-id").value) ? document.getElementById("student-id").value.trim() : "";
   const rentalYear = document.getElementById("rental-year").value;
   const rentalMonth = document.getElementById("rental-month").value;
   const rentalDay = document.getElementById("rental-day").value;
@@ -265,10 +265,6 @@ form.addEventListener("submit", async (e) => {
   if (!name || !rentalYear || !rentalMonth || !rentalDay ||
       !returnYear || !returnMonth || !returnDay || !selectedRentalItems.length) {
     showMessage("모든 항목을 입력하고 최소 하나 이상의 장비를 선택해주세요.", "error");
-    return;
-  }
-  if (!studentId) {
-    showMessage("학번을 입력해주세요. 등록된 이름과 학번이 일치할 때만 대여할 수 있습니다.", "error");
     return;
   }
 
@@ -299,7 +295,6 @@ form.addEventListener("submit", async (e) => {
   // 여러 항목을 배열로 전송
   const formData = {
     name: name,
-    studentId: studentId,
     rentalDate: rentalDateStr,
     returnDate: returnDateStr,
     // 각 항목마다 자신만의 equipmentType, equipmentItem 을 가짐
@@ -651,6 +646,11 @@ function updateSelectedReturnItems() {
 // 반납 확정 처리
 if (returnSubmitBtn) {
   returnSubmitBtn.addEventListener("click", async () => {
+    // 15초 쿨다운 중이면 추가 요청 무시
+    if (isReturnSubmitLocked) {
+      return;
+    }
+
     const name = (returnNameInput?.value || currentReturnName || "").trim();
     const studentId = (returnStudentIdInput?.value || "").trim();
 
@@ -673,6 +673,18 @@ if (returnSubmitBtn) {
     }
 
     try {
+      // 실제 시트 삭제 호출 직전에 15초 쿨다운 시작
+      isReturnSubmitLocked = true;
+      if (returnSubmitBtn) {
+        returnSubmitBtn.disabled = true;
+      }
+      setTimeout(() => {
+        isReturnSubmitLocked = false;
+        if (returnSubmitBtn) {
+          returnSubmitBtn.disabled = false;
+        }
+      }, 15000);
+
       returnMessageEl.textContent = "반납을 처리하는 중입니다...";
       returnMessageEl.className = "message message--info";
 
